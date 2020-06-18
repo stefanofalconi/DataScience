@@ -1,0 +1,477 @@
+---
+title: "Rental Agency"
+author: "Stefano Falconi"
+date: "8/6/2020"
+output:
+  html_document:
+    df_print: paged
+  pdf_document: default
+  word_document: default
+editor_options:
+  chunk_output_type: console
+---
+
+
+The analysis of the data provided by the rental agency is explained in this 
+report. Scrapping method was carried out with the use of R's "rvest"" 
+package and selector gadget. Upon selection of the classes, the data was down-
+loaded and filtered. Cleaning was done with the help of "gsub" function. 
+
+
+Unfortunately, there was lots of missing data; in particular, variable "floor" 
+accounted for approximately 36% of missing data. Out of 222 missing data for 
+variable floor, approximately 16% belong to the postal codes from Genève and
+they do not appear to follow any pattern. As it will be shown below, this 
+variable does not seem to contribute much in the analysis. 
+
+Visualization from both, "visdat" and "naniar" packages, proved to be handy in 
+combination as far as missing data is concerned. Missing data for the dependent
+variable “price” was relatively small, about 2.45%). One very important 
+explanatory variable, "living-space", had also a relatively high proportion of
+missing data (20.42%).
+
+Postal code from the address is the only variable without missing data. 
+Function "gsub" was straightforward and flexible enough for cleaning. 
+
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(yaml)
+library(rvest)
+library(magrittr)
+library(rebus)
+library(stringr)
+library(xml2)
+library(photobiology)
+library(formattable)
+library(purrr)
+library(knitr)
+library(kableExtra)
+library(data.table)
+library(imputeTS)
+library(visdat)
+library(naniar)
+library(readr)
+library(stats)
+library(DescTools)
+library(sjmisc)
+library(car)
+library(e1071)
+library(expss)
+
+                                                                              
+portal_address<-read_html('https://epfl-exts.github.io/rental-scrape/') %>%
+  
+html_nodes(".address") %>%
+html_text()
+portal_address<- as.character(gsub('\\s+',' ', portal_address))
+View(portal_address)
+
+portal_price<-read_html('https://epfl-exts.github.io/rental-scrape/') %>%
+  
+html_nodes(css= ".price")%>%
+  html_text()
+portal_price<- as.numeric(gsub('\\CHF',' ', portal_price))
+View(portal_price)
+
+portal_currency<-read_html('https://epfl-exts.github.io/rental-scrape/') %>%
+
+html_nodes(".price")%>%
+  html_text()
+portal_currency<- as.character(gsub('[^CHF]','',portal_currency))
+View(portal_currency)
+
+
+portal_object_type<-read_html('https://epfl-exts.github.io/rental-scrape/') %>%
+
+html_nodes(".object-type")%>%
+  html_text()
+portal_object_type<- as.character(gsub('\\s+',' ',portal_object_type))
+View(portal_object_type)
+
+portal_rooms<-read_html('https://epfl-exts.github.io/rental-scrape/') %>%
+
+html_nodes(".rooms")%>%
+  html_text()
+portal_rooms<- as.numeric(gsub('\\Rooms',' ', portal_rooms))
+portal_rooms<- round(portal_rooms, digits = 0)
+View(portal_rooms)
+
+portal_rooms_sinna<-na.omit(portal_rooms,na.action="omit",fill=NULL)
+Mode(portal_rooms_sinna)
+
+portal_living_space<-read_html('https://epfl-exts.github.io/rental-scrape/') %>%
+
+html_nodes(".living-space")%>%
+  html_text()
+View(portal_living_space)
+
+portal_living_space<- as.numeric(gsub('[\\Living space: m2]',' ',
+portal_living_space))
+View(portal_living_space)
+
+portal_floor<-read_html('https://epfl-exts.github.io/rental-scrape/') %>%
+
+html_nodes(".floor") %>%
+  html_text()
+portal_floor<- as.numeric(gsub('\\Floor:',' ',portal_floor))
+View(portal_floor)
+
+portal_floor_sinna<-na.omit(portal_floor,na.action="omit",fill=NULL)
+Mode(portal_floor_sinna)
+ 
+
+portal_availability<-read_html('https://epfl-exts.github.io/rental-scrape/') %>%
+
+html_nodes(".availability")%>%
+  html_text()
+portal_availability<- as.character(gsub('\\s+',' ',portal_availability))
+View(portal_availability)
+
+portal_usable_surface<-read_html('https://epfl-exts.github.io/rental-scrape/')%>%
+
+html_nodes(".usable-surface")%>%
+  html_text()
+portal_usable_surface<- as.character(gsub('\\Usable surface:',' ', 
+portal_usable_surface))
+View(portal_usable_surface)
+
+rental<-data.frame(portal_address, portal_price, portal_currency, 
+portal_object_type, portal_rooms, portal_living_space, portal_floor,
+portal_availability, portal_usable_surface)
+View(rental)
+
+
+col.from<-c("portal_address", "portal_price", "portal_currency",
+"portal_object_type", "portal_rooms", "portal_living_space",
+"portal_floor", "portal_availability", "portal_usable_surface")
+col.to<-c("address","price","currency", "object_type", "rooms",
+"living_space_m2", "floor", "availability", "usable_surface")
+
+names(rental)[match(col.from, names(rental))]<- col.to 
+View(rental) 
+vis_dat(rental)
+vis_miss(rental)
+table(is.na(rental$price))
+table(is.na(rental$living_space_m2))
+table(is.na(rental$floor))
+
+
+
+
+```
+
+The imputation package "imputeTS" and its "frequency" algorithm provided the 
+missing numbers for “price” and “living-space-m2 (there was the option in the 
+use of another algorithm, from the "mice" package but this method generated 
+more zero values than the imputeTS's package. As will be seen shortly, zero 
+values generate indeterminate values when used as an argument for the 
+logarithmic function).
+
+For variables "floor" and “room”, the mode of "1" and “4”, respectively, 
+were the reference for imputation.  Function "replace.na" provided with 
+missing values for the latter.  
+
+Before graphing the scatter plot of "price-living_space", it is essential 
+to mention how the variables behave individually. The idea is betteer 
+illustrated with histogram plots.
+
+If the histograms for prices and living-space_m2 are plotted, data will be 
+positive skewed. The interpretation for this is that there are a high number 
+of houses and appartments similar in prices and living areas but only few 
+places are in the other extreme of surface areas and price range. The plot
+will clarify this comment and reinforce the concept just mentioned.
+
+Take notice the lower left part of the plot. Most datapoints are clustered 
+between 1 and 190 m² and 1 and 10000 CHF. As for any trend, by adding a
+smoothed line to the plot, it it much to see it.
+
+As for the number of rooms, most houses and apartments have between 1-4 rooms 
+with a higher number of places with 1 to 2 rooms. Unlike the living-space 
+data, no such extremes are observed in the rooms variable. It is for this 
+reason that rooms' data has a relatively normal distribution shape. This can
+be observed in the histogram  plots, completely different from price, space 
+and number of floors.
+
+
+
+
+
+
+
+```{r echo =FALSE, message=FALSE, warning=FALSE}
+
+rental_tb<-as_tibble(rental) 
+  price_imputed<-na_seadec(rental_tb$price, algorithm = "interpolation", 
+find_frequency = TRUE, maxgap = Inf)
+price_imputed<-round(price_imputed, digits = 2)
+space_imputed<-na_seadec(rental_tb$living_space_m2, algorithm =
+"interpolation", find_frequency = TRUE, maxgap = Inf)
+space_imputed<-round(space_imputed, digits = 2)
+
+
+floor_imputed<-replace_na(rental_tb$floor, value= 1)
+floor_imputed
+
+rental_tb$floor_imputed<-round(floor_imputed, digits = 0)
+rental_tb$floor_imputed
+
+rooms_imputed<-replace_na(rental_tb$rooms,value = 4)
+
+table(is.na(price_imputed))
+table(is.na(space_imputed))
+table(is.na(floor_imputed))
+
+
+
+listado<-rental_tb$address %>% str_match_all("[0-9]+") %>% unlist %>% as.numeric
+listado_df<-data.frame(listado)
+listado_postal<-listado_df %>% filter(listado > 1000)
+listado_v<-as_vector(listado_postal)
+rental_tb$postalcod<-listado_v
+View(rental_tb)
+
+rental_tbl<- rental_tb %>%
+mutate(price_imputed, rooms_imputed, space_imputed, floor_imputed, postalcod)
+View(rental_tbl)
+
+write_csv(rental_tbl,  "rental_tbl.csv",
+quote_escape = "double")
+
+
+rental_tbl %>% ggplot(aes(x = space_imputed, y = price_imputed)) +
+     geom_point(colour = "purple",
+                size = 4,
+                alpha = 0.5) +
+     labs(title = "Price vs. Living space",
+          caption = "Living space as a function of surface area ",
+          x = "Space (m2)",
+          y = "Value amount (CHF)") +
+     theme_minimal()
+
+
+qplot(carat, price, data = dsmall, geom = c("smooth", "point"))
+
+
+
+
+```
+The scatter plot depicts some sort of a positive relationship. In order to 
+describe such association, two linear regressions were run. One included the 
+price_imputed and living_space_m2 variables, the other model was a double-log 
+function. The rationale for chosing this functional form is the skewness equals 
+2 for both variables. 
+
+
+
+```{r echo =FALSE}
+
+
+skewness(rental_tbl$price_imputed, na.rm= FALSE, type= 3)
+
+rental_tbl %>% ggplot(aes(x=price_imputed)) +
+  geom_histogram(aes(y = ..density..),
+                 bins = 20,
+                color= "black",
+                 fill = "blue",
+                 alpha= 0.3) +
+   geom_density() +
+  labs(title = "Skewness of Variable Price of Rent",
+                caption = "Rental prices in local market",
+                x= "CHF ($)",
+                y = "Frequency") +
+    theme_minimal()            
+
+
+skewness(rental_tbl$space_imputed, na.rm= FALSE, type= 3)
+
+rental_tbl %>% ggplot(aes(x=space_imputed)) +
+  geom_histogram(aes(y = ..density..),
+                 bins = 20,
+                color= "black",
+                 fill = "green",
+                 alpha= 0.3) +
+   geom_density() +
+  labs(title = "Skewness of Variable Living Space in m2",
+                caption = "Rental prices in local market",
+                x= "CHF ($)",
+                y = "Frequency") +
+    theme_minimal()            
+
+
+
+
+skewness(rental_tbl$rooms_imputed, na.rm= FALSE, type= 3)
+
+rental_tbl %>% ggplot(aes(x=rooms_imputed)) +
+  geom_histogram(aes(y = ..density..),
+                 bins = 20,
+                color= "black",
+                 fill = "yellow",
+                 alpha= 0.3) +
+   geom_density() +
+  labs(title = "Skewness of Variable Rooms",
+                caption = "Rental prices in local market",
+                x= "CHF ($)",
+                y = "Frequency") +
+    theme_minimal()            
+
+
+skewness(rental_tbl$floor_imputed, na.rm = FALSE, type=3)
+
+
+rental_tbl %>% ggplot(aes(x=floor_imputed)) +
+  geom_histogram(aes(y = ..density..),
+                 bins = 20,
+                color= "black",
+                 fill = "brown",
+                 alpha= 0.3) +
+   geom_density() +
+  labs(title = "Skewness of Variable Floor",
+                caption = "Rental prices in local market",
+                x= "CHF ($)",
+                y = "Frequency") +
+    theme_minimal()            
+
+
+```
+
+
+A double log model indicates the percentage change of the dependant variable for 
+every percentage unit of change of the explanatory variable. The 0.2321 coefficient 
+of living-space_m2 is interpreted in the following fashion: For every 1% change in 
+squared maters for the living-space, the rental price changes by about 23.21%. 
+Specifically, for every 23.21% increment in squared meters of space, the rental 
+price's increment is approximately 5%. It is calculated as it follows: 
+((1.2321^0.2321)- 1)*100. 
+
+
+
+
+```{r echo =FALSE}
+
+ rental_tbl_no0<-subset(rental_tbl, space_imputed!=0)
+ rental_tbl_no0$priceln<-log(rental_tbl_no0$price_imputed)
+ 
+rental_tbl_no0$spaceln<-log(rental_tbl_no0$space_imputed)
+View(rental_tbl_no0)
+model_priceln_spaceln<-lm(priceln ~ spaceln, data =rental_tbl_no0) 
+summary(model_priceln_spaceln)
+Coefint_priceln_spaceln<-confint(model_priceln_spaceln, level=0.95)
+Coefint_priceln_spaceln
+
+
+model_price_space<-lm(price_imputed ~ space_imputed, data=rental_tbl)
+summary(model_price_space)
+Coefint_price_space<-confint(model_price_space, level=0.95)
+Coefint_price_space
+
+
+
+```
+
+For the second model, for every increase of 1 m² in living space, rental 
+price incremented accordingly to 14 CHF.
+
+For both models the coefficients have the correct positive signs and they have 
+statistical significance at 0.1%, 0.01%, and 0.05% levels. Take notice both 
+confidence intervals do not include the zero value, supporting the p-value.
+
+
+The table below shows the coefficients, the R² adjusted-value,  the p-value and 
+the confidence intervals (CI). Both models have relatively low R2 adjusted-value. 
+In addition for indicating how well the data points fit well the curve, the 
+R2 adjusted value would increase when proper variables are included; otherwise
+would decrease when variables are useless.
+
+```{r echo =FALSE} 
+ Table1<-data.frame("Models" = c("model_price_ln_space_ln","model_price_space"), "intercept"=c(7.1042, 2712.907), "coefficient" = c(0.2321,14.255), "R2_adj" = c(0.1239,0.1735), "CI_inf"=c(0.1825067, 11.79426), "CI_sup"=c(0.2817, 16.715), stringsAsFactors = FALSE)
+
+View(Table1)
+```
+
+The following table shows the distribution of properties according to postal
+code
+```{r echo =FALSE}
+postal_codes <- rental_tbl %>%
+     count(postalcod, name = "properties")
+View(postal_codes)
+ 
+ postal_codes %>% ggplot(aes(x = postalcod, y = properties , fill = postalcod)) +
+    geom_col(alpha = 0.7, col="orange") +
+    labs(title = "Number of Properties by Postal Codes",
+         caption = "Most activity of agency seems to be at Genève",
+         x = "Location",
+         y = "Frequency") +
+    theme_minimal() +
+    theme(legend.position = "none")
+ 
+ 
+ geneve<- postal_codes %>%
+ filter(postalcod %in% c(seq(1200,1209,1)))%>%
+ summarize(sum(properties))
+ geneve
+ 
+
+
+na_geneve<-  rental_tbl %>%
+select(floor, postalcod) %>%
+filter(postalcod %in% c(seq(1200,1209,1)))
+View(na_geneve)
+table(na_geneve$floor=="NA")
+ 
+
+```
+
+It can be seen in the last plot that most of the activity of the agency takes
+place at Genève. The table above exhibits the distribution of properties for 
+the 56 postal codes of which 300 properties were rented in that city. There 
+are also included two llustrative plots showing with the  geom_miss_point" 
+function the activity for the 56 postal codes, for both cases, with missing 
+data and non-missing data. These plots show an upward-sloped movement in the
+dots from the small plots. A different pattern is observed in  the remaining
+46 plots (different cities).
+
+The last plot shows price, space, number of floors, and location of property.
+
+It would be interesting to analize further variables that could possibly exert
+some influence in the rental price such as: distance to shopping centers or 
+downtown, age of apartment, noise, pollution, etc.
+
+
+```{r echo =FALSE}
+
+rental_tbl %>% ggplot(aes(x=living_space_m2, y=price))+
+  geom_miss_point()+
+  facet_wrap(~postalcod)
+
+rental_tbl %>% ggplot(aes(x=space_imputed, y=price_imputed))+
+  geom_miss_point()+
+  facet_wrap(~postalcod)
+
+
+
+
+ rental_tbl_all<-rental_tbl %>%
+ pivot_longer(
+   cols = c(postalcod, floor_imputed),
+   names_to = "profile",
+   values_to = "info")
+ View(rental_tbl_all)
+ 
+ 
+ 
+ ggplot(rental_tbl_all, aes(x=space_imputed, y=price_imputed, fill=profile)) +
+   geom_bar(position = "stack", stat = "identity") + geom_point(colour = "purple",
+                size = 0.75,
+                alpha = 0.5) +
+    facet_wrap(~ profile+info) +
+     labs(title = "Price vs. Living space, postal code and number of floors",
+          caption = "Rental prices (place, space, and number of floors)",
+          x = "Area (m²)",
+          y = "Value (CHF)") +
+     theme(text=element_text(size=8), axis.text.x=element_text(angle=45, hjust=1))
+
+```
+

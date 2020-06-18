@@ -1,0 +1,526 @@
+---
+title: "R Notebook"
+output: 
+  html_document: 
+    fig_caption: yes
+    keep_md: yes
+editor_options:
+  chunk_output_type: console
+---
+
+## Part 1
+Apparently, the instances when athletes have competed for orher countries have 
+been due to political implications. One instance occured during the year 1992, 
+after the dissolution of the Soviet Union. Nine out of the twelve ex countries 
+competed under the name of Unified European Countries. About 280 athletes from
+these countries participated in the Games in Spain.
+
+Unlike the rest of the ex Soviet republics, both West and East Germany had 
+joined teams during the period 1956 and 1968 and during 1988, previous to the 
+reunification in 1992. The table below shows that during the 1956 Games, the 
+only German team (49 athletes in total) present at the Games was GER's.  
+Joined participation doubled for the next two games. Ocasionally, politics get
+involved in the Olympics, West Germany boylcotted the Moscow Games in 1980 and 
+East Germany boycotted the LA Games in 1984.
+
+## Part 2
+                                                                                
+The table below shows ten athletes who took part in most games. 
+
+## Part 3
+
+For an athlete to have kept his/her Gold medal the longest only meant two conditons:
+One conditon was necessary but the other was not sufficient. The only way to keep
+the medal required that he/she would have to win additional Gold medals as much as 
+the career allows and this is about a period for three Games to take place. 
+In order to find out both conditions, there was a need to filter the number of 
+medals. In a way, searching for the number of medals - although not searching 
+explicitly for attendance at several Games - implied that the athlete had to be 
+present in several Games. By systematichally searching for more than two gold
+medals, keep filtering for more than three and so on, eventually, the list 
+became shorter, short enough to show 23 gold medals (Michael Phelps), one 
+athlete with 10 gold medals and four athletes with 9 gold medals. Among them,
+there was Carl Lewis who kept his medal for ten years. It was now the time for 
+searching the "time" variable and this only meant to filter the athlete_id and 
+look for number of Games.
+
+Carl Lewis, Raymond Clarance Ewry, Mark Spitz reached nine and 10 Gold medals
+in this time. Even Michael Phelps needed three Games to win his medals, except
+that he won 23 Gold medals and few people remembers he also won 3 Silver and 2
+Bronze medals.
+
+## Part 4
+
+Pat Ryan kept the record of hammer throw for 25 years since 1920.
+He was born in Ireland but participated for the USA team. This makes the USA the
+country that kept a gold model for the longest time.
+
+Jarmila Kratoviluvá from Czechoslovakia, then, won her Silver medal in the 
+Olympics in her specialty, 400 meters. In 1983 she broke the record for the 800
+meters which still has not been broken yet. People mistakenly think she broke 
+this record in the Olympics.
+
+##Part 5
+
+The athletes who participated in most events are listed in Table 2. 
+
+
+
+## Part 6
+
+
+A new table showing the number of medals per country (rows) and per year (column)
+was elaborated. Indeed, two tables were elaborated: One with 15 entries, each row 
+for every country, the second one disaggregated the three type of medals and 
+includes 48 entries (15 * 3 corresponding to the 15 countries with the most
+medals overall and three entries for the ex-Soviet Union). The idea was to make
+a comparison between the years bebore 1992 and after.
+
+One interesting aspect of this table was two periods: one before 1984 and one after.
+The comparison is made for China. Before 1984 Chins had not success in the Games but 
+starting 1984, China's athletes starting succeding in winning medals. In 1984 they
+won 74 medals, of which 24 were Gold. The year 2008 Chinese atheletes won 184 medals,
+of which 74 were Gold. 
+
+Still compared with the strength of the USA olympic team, China is in deficit. Just
+to mention the proportions, from 1984 and 2016, for every game the USA's number of
+Gold medals alone is greater than China's total (including Silver and Bronze. Only
+in 2008 China's total of medals (184) was larger than the 127 Gold medals from the USA.
+Keep only the 15 countries with the most medals overall.
+
+
+## Part 7
+
+The Chi-square test compares theoretical or expected frequencies with the 
+observed frequencies of ocurrence of an event. If there would  not be any 
+difference in the ability of the athletes from any country in winning a medal,
+every country, theorically speaking, would have a probability of 1/15 in 
+winning all medals (there are approximately 144 countries, therefore, this 
+ratio wold be 1/144 but the analysis is done for the sake of simplicity only 
+among 15 countries). It tests how likely it is that an observed variable 
+distribution is due to chance. In the statistical jargon, it is also called a 
+"goodness of fit" statistic, because it determines how well the observed data 
+distribution fits with the distribution that is expected (assuming the variables
+are independent).
+
+The null hypothesis from above implies that all 15 countries have the same 
+chance of capturing the medals. If this is not true, this means some countries 
+have developed several factors that explain why they win more medals.
+
+The procedure is the following: The observed frequencies (number of medals won
+by their countries’ athletes) are represented by a vector -in this case such 
+vector is defined as “medals_15”. The function chisq.test has the following 
+arguments: 1) the vector just mentioned, 2) a vector of probabilities (these 
+are the expected frequencies), 3) “simulate.p.value = TRUE".  This aplies to 
+Monte Carlo simulation, an  approximation of the sampling distribution of the 
+sample proportion if it were to asume that the null hypothesis is true. The 
+last argument, B, is the number of repetitions for the Monte Carlo repetitions. 
+
+If the differences between the observed frequencies of medals and the expected 
+frequencies are indeed large, chances that the actual population (15 countries) 
+has the same theoretical probability distribution used in the model are low. The 
+greater this difference, the larger the chi-squared value is. Assuming the null
+hypothesis is true, it is feasible to get a high chi-squared value but not very 
+likely.
+
+
+Null hypothesis: There is no significant difference between the observed and the 
+expected value.
+
+Alternative hypothesis: There is a significant difference between the observed and
+the expected value.
+
+medals_15<-anal2$cantidad
+chisq.test(medals_15, 
+            p = rep(1/length(medals_15), length(medals_15)), 
+            simulate.p.value = TRUE, B = 2000)
+
+Chi-squared test for given probabilities with simulated p-value (based on 2000 replicates)
+
+data:  medals_15
+X-squared = 11827, df = NA, p-value = 0.0004998
+
+The test shows a very low p-value, a strong evidence to reject the null hypothesis 
+that there is no a relationship between a country and whether they win a medal or not. 
+The chart illustrates this, in particular, with countries such as the USA and the ex 
+Soviet Union. 
+
+
+
+
+##Part 8
+
+
+
+
+
+```{r}
+library(tidyverse)
+library(readxl)
+library(fs)
+library(stats)
+library(dplyr)
+library(mrgsolve)
+library(visdat)
+library(tidyr)
+atletas1<-read_excel("olympics.xlsx", 1)
+pais2<-read_excel("olympics.xlsx",2)
+juegos<- read_excel("olympics.xlsx",3)
+deportes2<- read_excel("olympics.xlsx",4)
+
+atletas2<-atletas1 %>%
+rename(athlete_id = ID)
+View(atletas2)
+
+
+atletadep2<-inner_join(atletas2, deportes2, by=c("athlete_id"))
+
+atletadep2<- atletadep2 %>% distinct()
+
+atletadep3<-atletadep2[,-10]
+
+vis_miss(atletadep3, warn_large_data = FALSE)
+
+
+
+atletadep3_def<-atletadep3 %>% drop_na()
+
+
+pais_dep2<-inner_join(pais2, deportes2, by=c("athlete_id", "Games"))
+View(pais_dep2)
+pais_dep2_rem<-pais_dep2 %>% distinct() 
+View(pais_dep2_rem)
+vis_miss(pais_dep2_rem, warn_large_data = FALSE)
+
+pais_dep2_def<-pais_dep2_rem %>% drop_na()
+View(pais_dep2_def)
+vis_miss(pais_dep2_def, warn_large_data = FALSE)
+
+EUN<-pais_dep2_def %>%
+dplyr::select(athlete_id,NOC,Team,Games)%>%
+filter(NOC == "EUN",Games %in% c("1992 Summer", "1992 Winter")) %>% 
+arrange(athlete_id)
+View(EUN)
+ 
+View(atletadep3_def)
+GDR_GER<- pais_dep2_def %>%
+select(athlete_id,NOC,Games) %>%
+group_by(NOC, Games)%>%
+filter(NOC %in% c("GER", "GDR") , Games %in% c("1956 Summer", "1956 Winter","1960 Summer","1960 Winter"
+,"1964 Summer", "1964 Winter", "1968 Summer", "1968 Winter", "1972 Summer", "1972 Winter", "1976 Summer",
+"1976 Winter", "1980 Summer", "1980 Winter", "1984 Summer", "1984 Winter","1988 Summer", "1988 Winter",
+"1992 Summer", "1992 Winter")) %>%
+count(athlete_id, name = "number_athletes") %>%
+tally()%>%
+arrange(Games)
+View(GDR_GER)
+
+
+
+
+most_competition<-atletadep3_def %>%
+ select(Name,Games,Event)%>%
+ group_by(Name) %>%                                                                                       count(Event,name="frequency") %>%
+  arrange(desc(frequency))
+head(most_competition, 12)
+
+
+most_games<-atletadep3_def %>%
+     select(Name, Games)%>%
+     group_by(Name) %>% 
+count(Games,name="frequency") %>%
+ arrange(desc(frequency))
+head(most_games, 11)
+
+mostmedals<- pais_dep2_def %>%
+select(athlete_id, Sport,Medal) %>%
+group_by(athlete_id, Sport,Medal) %>%
+filter(Medal=="Gold") %>%
+count(Medal=="Gold", name = "most_medals") %>%
+arrange(desc(most_medals))
+head(mostmedals,100)
+
+name_athletes<-atletadep3_def %>%
+select(athlete_id, Name,Team, Event) %>%
+group_by(Name) %>%  
+filter(athlete_id %in% c(94406,33557,67046,69210,87390,113912,11642,11951,13029,35550)) %>%
+arrange(desc(Team), desc(Name))
+View(name_athletes)
+
+library(data.table)
+nameathletes= as.data.table(name_athletes)
+nameathletes[1:10, ]
+
+
+
+           
+
+ id<-pais_dep2_def %>%
+ select(athlete_id, Games, Sport,Medal) %>%
+ group_by(Medal) %>%
+ filter(athlete_id==63804, Sport=="Athletics") %>%
+ count(Medal, name = "number_medals")
+
+id<-pais_dep2_def %>%
+ select(athlete_id, Games, Sport,Medal) %>%
+ group_by(Medal) %>%
+ filter(athlete_id=="103796", Sport=="Athletics") %>%
+ count(Medal, name = "number_medals")
+View(id)
+
+Ryan<-atletas1 %>%
+select(ID, Name) %>%
+filter(ID==103796)
+
+
+ 
+corredor<-pais_dep2_def %>%
+select(athlete_id, Sport, Medal) %>%
+group_by(athlete_id, Sport) %>%
+filter(Sport=="Athletics") %>%
+count(Medal, name= "medallista") %>%
+arrange(athlete_id)
+View(corredor)
+
+table(corredor$medallista)
+
+
+nadador<-pais_dep2_def %>%
+select(athlete_id, Sport, Medal) %>%
+group_by(athlete_id, Sport) %>%
+filter(Sport=="Swimming") %>%
+count(Medal, name= "medallista") %>%
+arrange(athlete_id)
+View(nadador)
+
+table(nadador$medallista)
+
+   1    2    3  
+ View(atletadep3_def)  
+   
+
+
+pais_dep3_def<-pais_dep2_def
+pais_dep3_def$Year<-gsub("[a-zA-Z]","", pais_dep3_def$Games)
+pais_dep3_def$Season<-gsub("[0-9]","", pais_dep3_def$Games)
+View(pais_dep3_def)
+
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+atl<-pais_dep2_def %>%
+select(athlete_id, Sport, Medal) %>%
+group_by(Sport,Medal) %>%
+filter(Sport %in% c( "Basketball","Judo", "Speed Skating", "Cross Country
+Skiing" ,"Athletics","Ice Hockey", "Badminton","Sailing","Biathlon",
+"Gymnastics","Alpine Skiing","Handball", "Weightlifting" ,"Wrestling",
+"Luge","Rowing", "Bobsleigh", "Swimming","Football","Equestrianism",
+"Shooting","Boxing","Taekwondo","Fencing","Diving","Canoeing","Water Polo",
+"Tennis","Cycling","Hockey","Figure Skating"   ,"Softball","Archery",
+"Volleyball","Synchronized Swimming","Modern","Pentathlon","Table Tennis",
+"Nordic Combined","Baseball","Rhythmic Gymnastics","Freestyle Skiing",
+"Rugby Sevens","Golf","Rugby", "Trampolining","Beach Volleyball","Triathlon",
+"Ski Jumping","Curling", "Snowboarding","Short Track Speed Skating","Skeleton",
+"Art Competitions","Tug-Of-War","Lacrosse","Polo","Motorboating", "Jeu De Paume",
+"Racquets")) %>%
+count(Medal,name = "num_med") %>%
+arrange(desc(num_med))
+ 
+View(atl)
+
+
+
+
+df<-atletadep3_def  %>%
+ select(Height, Weight, Sport) %>%
+ group_by(Sport)%>%
+ filter(Sport %in% c( "Basketball","Judo", "Speed Skating", "Cross Country Skiing",
+ "Athletics","Ice Hockey", "Badminton","Sailing","Biathlon","Gymnastics","Alpine Skiing",
+ "Handball", "Weightlifting" ,"Wrestling","Luge","Rowing","Bobsleigh","Swimming",
+ "Football","Equestrianism","Shooting","Boxing","Taekwondo","Fencing","Diving","Canoeing",
+ "Water Polo","Tennis","Cycling","Hockey","Figure Skating","Softball","Archery","Volleyball",
+ "Synchronized Swimming","Modern","Pentathlon","Table Tennis",  "Nordic Combined","Baseball",
+ "Rhythmic Gymnastics","Freestyle Skiing","Rugby Sevens","Golf","Rugby", "Trampolining",
+ "Beach Volleyball","Triathlon","Ski Jumping","Curling", "Snowboarding","Short Track Speed 
+ Skating","Skeleton", "Art Competitions","Tug-Of-War","Lacrosse","Polo","Motorboating",
+ "Jeu De Paume" , "Racquets" )) %>%  
+
+  mutate(bmi=Weight/((Height/100)^2)) %>%
+  summarise(mheight=mean(Height),mweight=mean(Weight), maxh=max(Height), mimh=min(Height), 
+  mxw=max(Weight), miw=min(Weight), mbmi=mean(bmi), mxbmi=max(bmi), mibmi=min(bmi),
+  minAveHeight = min(mimh), minAveHeightSport = Sport[which.min(mimh)],maxAveHeight=max(maxh),
+  maxAveHeightSport = Sport[which.max(maxh)], minAveWeight = min(miw),
+  minWeightSport = Sport[which.min(miw)], maxAveWeight = max(mxw),
+  maxAveWeightSport = Sport[which.max(mxw)], minAveBMI = min(mibmi), 
+  minAveBMISport = Sport[which.min(mibmi)], maxAveBMI = max(mxbmi),
+  maxAveBMISport = Sport[which.max(mxbmi)]) 
+View(df)
+
+
+ df1 <- df%>%
+select(Sport,minAveHeight, maxAveHeight, minAveWeight, maxAveWeight, minAveBMI,maxAveBMI,mheight,
+mweight) %>%
+summarise(min(minAveHeight), min(minAveWeight), min(minAveBMI),max(maxAveHeight), max(maxAveWeight),
+max(maxAveBMI)) 
+
+ View(df1)
+ 
+ df2<-data.frame(metricas =c("minAveHeight", "minAveWeight", "minAveBMI", "maxAveHeight", 
+"maxAveWeight", "maxAveBMI"),  values=c(min(df$minAveHeight), min(df$minAveWeight),min(df$minAveBMI),
+max(df$maxAveHeight), max(df$maxAveWeight), max(df$maxAveBMI)))
+            
+  
+deporte <- c('Basketball','Boxing','Football', 'Gymnastics','Judo')
+x <- c(191.20, 172.78, 175.38, 162.87, 174.15)
+y <- c(85.78, 65.28, 70.44, 56.91, 78.78)
+df3<-data.frame(deporte,x,y)
+
+View(df3)
+
+
+  
+
+
+
+
+ggplot(df,aes(x = mheight, y = mweight)) +
+    geom_point(colour = "orange",
+               size = 4,
+               alpha = 0.5) +  geom_label(data = df3, mapping = aes(label=deporte, size=4))+
+    labs(
+        x = "Average height",
+        y = "Average weight",
+        title = paste(
+            "Maximum and Minimum Average Height,
+            Weight and BMI of Olympic Sports" 
+        )
+    )
+
+
+
+
+dep_rep<- dep %>% group_by(Games) %>%
+  summarise(c = names(table(athlete_id))[which.max(table(athlete_id))])
+ View(dep_rep)
+
+ 
+pais_dep3_def<-pais_dep2_def
+pais_dep3_def$Year<-gsub("[a-zA-Z]","", pais_dep3_def$Games)
+pais_dep3_def$Season<-gsub("[0-9]","", pais_dep3_def$Games)
+View(pais_dep3_def)
+
+medallasn<- pais_dep3_def %>%
+dplyr::select(NOC,Medal,Year) %>%
+filter(Medal %in% c("Gold", "Silver", "Bronze")) %>%
+count(Medal, name = "n") %>%
+arrange(n)  
+View(medallasn) 
+ 
+los_15_t<-medallasn %>%
+select(NOC, Year, n) %>%
+filter(NOC %in% c("USA", "URS", "RUS", "CHN", "GER", "GBR", "FRA", "ITA", "SWE","CAN","FIN", "AUS",
+"JPN", "NOR", "POL"))
+View(los_15_t)    
+
+tabla_15<-los_15_t %>%
+pivot_wider(
+names_from= "Year",
+values_from="n")
+View(tabla_15)
+
+
+pais_dep3_def<-pais_dep2_def
+pais_dep3_def$Year<-gsub("[a-zA-Z]","", pais_dep3_def$Games)
+pais_dep3_def$Season<-gsub("[0-9]","", pais_dep3_def$Games)
+View(pais_dep3_def)
+
+
+analisis<-pais_dep3_def %>%
+select(athlete_id, NOC, Year, Sport, Medal) %>%
+group_by(NOC, Medal,Year) %>%
+filter(Medal %in% c("Gold", "Silver","Bronze")& Year %in% c("1896", "1900", "1904", "1906", "1908",
+"1912", "1920","1924","1928","1932","1936", "1948" ,"1952" ,"1956", "1960", "1964", "1968", "1972",
+"1976", "1980", "1984" , "1988", "1992", "1994", "1996", "1998", "2000", "2002", "2004", "2006",
+"2008", "2010", "2012", "2014", "2016")) %>%
+count(Medal, name="n") %>%
+arrange(desc(n))
+View(analisis)
+
+los_15_paises<- analisis %>%
+select(NOC, Medal, Year, n) %>% 
+filter(NOC %in% c("USA","URS", "RUS", "CHN", "GER", "GBR", "FRA", "ITA", "SWE","CAN","FIN","AUS","JPN", 
+"NOR", "POL")) View(los_15_paises)
+
+
+tabla_15_paises<-los_15_paises %>%
+pivot_wider(
+names_from= "Year",
+values_from="n")
+View(tabla_15_paises)
+tabla_15_paises_ord<-tabla_15_paises[,c(1,2,35,27,13,34,16,15,30,24,19,23,25,22,17,20,18,9,7,3,4,5,21,
+6,11,14,32,12,26,8,28,10)] 
+ 
+View(tabla_15_paises_ord)
+
+
+
+
+ analisis<-pais_dep3_def %>%
+select(NOC, Medal) %>%
+group_by(NOC,Medal) %>%
+count(Medal, name="n") %>%
+   filter(n>375) %>%
+       arrange(desc(n)) 
+ 
+View(analisis)
+
+ 
+ ggplot(analisis,aes(x = NOC, y = n, fill=Medal)) +
+    geom_bar(stat = "identity") + ggtitle("Olympics Distribution of Medals Top 15")+
+    coord_flip() + scale_y_continuous(name="Number of Medals for Top 15 Countries") +
+    scale_x_discrete(name="Country") +
+    theme(axis.text.x = element_text(face="bold", color="#008000",
+                                     size=8, angle=0),
+          axis.text.y = element_text(face="bold", color="#008000",
+                                     size=8, angle=0)
+
+ 
+ 
+ 
+ 
+ 
+medallas2<-pais_dep1_def %>%
+group_by(Games, Medal) %>%
+filter(Medal %in% c("Gold", "Silver", "Bronze")) %>%
+count(Medal, name = "number_medal")
+
+medallas2$Year<-gsub("[a-zA-Z]","", medallas2$Games)
+medallas2$Season<-gsub("[0-9]","", medallas2$Games)
+View(medallas2)
+
+
+ggplot(medallas2, aes(x = Year, y = number_medal, group=Medal, color=Medal)) + 
+geom_point(size=1)+
+geom_line(size =1) +  
+scale_color_manual(values = c("Bronze" = "red", "Gold" = "green", 
+"Silver" = "blue")) + 
+facet_grid(Season ~ Medal)+                               
+labs(x="Year", y="Number of medals")+                                                              theme(text=element_text(size=8), axis.text.x=element_text(angle=90, hjust=0))      
+
+
+
+
+
+ 
+ 
+ 
+ 
+ 
+
+```
+

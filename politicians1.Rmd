@@ -1,0 +1,596 @@
+---
+title: "Politicians"
+author: "Stefano Falconi"
+date: "13/6/2020"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+##Part 1
+What can be observed is that for the group of politicians starting their
+mandates, there is no room for "Executive Councils". Only for the years 1803,
+1827 and 1839, three individuals started their mandate as "Small Council".
+Apparently, this position lost relatively importance. Likewise,for the second 
+group - those finishing their mandate - "Small Councils" never appeared.
+
+For this second group, between the years 1840 and 1939, there were seven
+periods of massive retirements (about 200 politicians). Past 1939, this
+seoond group had retirement of smaller size (50). For the first group, the
+only three massive "starters" occurred only in the XIX Century and no more 
+than three massive occurrences. Massive starters included about 130 poloiticians
+at once for both, Cantonal and Gran Council.
+
+## Part 2
+Apparently, involvement of women into politics is relatively low as can be
+observed in the two plots, one for starting mandates and another for ending
+mandate.
+
+## Part 3
+The table shows one elected candidate for the EVP, FDP, and LdU parties for
+year 2000 and five candidates from the SP party elected for same year.
+
+## Part 4
+In the past three years four parties have had more elected candidates for the 
+Cantonal Council: EDU, BDT, SP, and AL
+
+## Part 5
+The average life span is 80.2 years. It does change by title. The boxplot gives 
+a clue about the life span difference between politicians with title compared
+to those without title. The median´s boxplot value almost coincides with the
+mean's life span for the whole group (title + no title), whereas the median 
+for the no "formally" educated politicians was lower.
+
+It was hard to tell without the plot any potential difference. My expectation 
+agrees with the results of the Kruskal-Wallis test of difference in life span 
+from the two groups.  
+
+## Part 6
+It was interesting to observe how in the first case - before 1918 - the medians
+of both boxplots (formally educated vs no title) were similar. The Kruskal-Wallis
+test confirmed such visual equality (p-value = 0.4359).
+
+For the secon group - after 1918, the difference in medians resembled that from 
+above (Part 5). The p-value was so low that it was a strong evidence for 
+rejecting the null hypothesis pf "no difference in life span among politicians 
+with title vs politicians with no title".
+
+## Part 7
+The ten politicians with most mandates are the following:
+                                                               
+Six terms: K. Arbenz, S.Spöngli, H. Weiss, J. Hatt, E.Sulzer, H.Toggenburger;
+Five terms: W. Trostel, M. Sulzer, J.Schenk, J.Zollinger
+
+## Part 9
+Several politicians have been affiliiated to different parties along the years. 
+For instance: E. Bachmann, E. Kessler, Alfred Messer have been affiliated to four
+different parties and Willy Trustel and Arthur Bachmann to five different parties.
+
+
+```{r}
+
+library(tidyverse)
+library(dplyr)
+library(tidylog)
+library(tidyr)
+library(lubridate)
+library(odbc)
+library(RSQLite)
+library(DBI)
+library(stringr)
+library(ggpubr)
+library(visdat)
+
+
+zpoliticians_db <- dbConnect(RSQLite::SQLite(), "zh_politicians.db")
+
+ 
+ dbListTables(zpoliticians_db) 
+
+mandato<-DBI::dbGetQuery(zpoliticians_db, 
+"SELECT DISTINCT ID, PERSON_ID, ASSEMBLY, MANDATE_START_DAY,
+MANDATE_START_MONTH, MANDATE_START_YEAR, MANDATE_END_DAY, 
+MANDATE_END_MONTH, MANDATE_END_YEAR FROM MANDATES;")   
+ 
+ mandato_p<-DBI::dbGetQuery(zpoliticians_db,
+"SELECT DISTINCT ID, LASTNAME, FIRSTNAME, TITLE, GENDER, YEAR_OF_BIRTH,
+YEAR_OF_DEATH FROM PERSONS;")                          
+ 
+  mandato_a<-DBI::dbGetQuery(zpoliticians_db,
+"SELECT DISTINCT ID, MANDATE_ID, PERSON_ID, PARTY, AFFILIATION_START_DAY, 
+AFFILIATION_START_MONTH, AFFILIATION_START_YEAR, AFFILIATION_END_DAY,
+AFFILIATION_END_MONTH, AFFILIATION_END_YEAR FROM AFFILIATIONS;")
+ 
+mandato_a_red<- mandato_a[,c(3,2)]
+
+
+  
+ mandato_pol<-mandato %>% 
+select(ASSEMBLY,MANDATE_START_DAY, MANDATE_START_MONTH, MANDATE_START_YEAR)%>%
+group_by(ASSEMBLY,MANDATE_START_DAY, MANDATE_START_MONTH)%>% 
+filter(MANDATE_START_YEAR %in% c(1803,1805,1807,1808,1809,1811,1813,1814,
+1815,1816,1817,1818,1819,1820,1821,1822,1823,1824,1825,1826,1827,1828,1829,
+1830,1831,1832,1833,1834,1835,1836,1837,1838,1839,1840,1841,1842,1843,1844,
+1845,1846,1847,1848,1849,1850,1851,1852,1853,1854,1855,1856,1857,1858,1859,
+1860,1861,1862,1863,1864,1865,1866,1867,1868,18691870,1871,1872,1873,1874,
+1875,1876,1877,1878,1879,1880,1881,1882,1883,1884,1885,1886,1887,1888,1889,
+1890,1891,1892,1893,1894,1895,1896,1897,1898,1899,1900,1901,1902,1903,1904,
+1905,1906,1907,1908,1909,1928,1929,1930,1931,1932,1933,1934,1935,1936,1937,
+1938,1939,1940,1941,1942,1943,1944,1945,1946,1947,1948,1949,1950,1951,1952,
+1953,1954,1955,1956,1957,1958,1959,1960,1961,1962,1963,1964,1965,1966,1967,
+1968,1969,1970,1971,1973,1974,1975,1976,1977,1978,1979,1980,1981,1982,1983,
+1984,1985,1986,1987,1988,1989,1990,1991,1992,1993,1994,1995,1996,1997,1998,
+1999,2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,
+014,2015,2016,2017,2018), ASSEMBLY %in% c("Cantonal Council","Executive
+Council", "Grand Council", "Small Council") )%>%
+count(MANDATE_START_YEAR, name="cambios") %>%
+arrange(MANDATE_START_YEAR)
+View(mandato_pol)
+ 
+ggplot(mandato_pol, aes(x=MANDATE_START_YEAR, y=cambios, color=ASSEMBLY))+
+  geom_point() + geom_line(colour="blue")+facet_wrap(.~ ASSEMBLY, ncol = 4)+
+ scale_x_continuous(name = "Mandate starts", limits = c(1800, 2020)) +
+  scale_y_continuous(name = "Period change", limits = c(0, 150))
+
+
+
+ 
+mandato_pol_end<-mandato %>%
+select(ASSEMBLY,MANDATE_END_DAY, MANDATE_END_MONTH, MANDATE_END_YEAR)%>%
+group_by(ASSEMBLY,MANDATE_END_DAY, MANDATE_END_MONTH)%>% 
+filter(MANDATE_END_YEAR %in% c(1804,1805,1807,1808,1809,1810,1811,1812,
+1813,1814,1815,1816,1817,1818,1819,1820,1821,1822,1824,1825,1826,1827,1828,
+1829,1830,1831,1832,1833,1834,1835,1836,1837,1838,1839,1840,1841,1842,1843,
+1844,1845,1846,1847,1848,1849,1850,1851,1852,1853,1854,1855,1856,1857,1858,
+1859,1860,1861,1862,1863,1864,1865,1866,1867,1868,1869,1870,1871,1872,1873,
+1874,1875,1876,1877,1878,1879,1880,1881,1882,1883,1884,1885,1886,1887,1888,
+1889,1890,1891,1892,1893,1894,1895,1896,1897,1898,1899,1900,1901,1902,1903,
+1904,1905,1906,1907,1908,1909,1910,1911,1912,1913,1914,1915,1916,1917,1918,
+1919,1920,1921,1922,1923,1924,1925,1926,1927,1928,1929,1930,1931,1932,1933,
+1934,1935,1936,1937,1938,1939,1940,1941,1942,1943,1944,1945,1946,1947,1948,
+1949,1950,1951,1952,1953,1954,1955,1956,1957,1958,1959,1960,1961,1962,1963,
+1964,1965,1966,1967,1968,1969,1970,1971,1972,1973,1974,1975,1976,1977,1978,
+1979,1980,1981,1982,1983,1984,1985,1986,1987,1988,1989,1990,1991,1992,1993,
+1994,1995,1996,1997,1998,1999,2000,2001,2002,2003,2004,2005,2006,2007,2008,
+2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019), ASSEMBLY %in% 
+  c("Cantonal Council", "Executive Council", "Grand Council", "Small 
+  Council")) %>%
+count(MANDATE_END_YEAR, name="retiro") %>%
+arrange(MANDATE_END_YEAR)
+View(mandato_pol_end)
+
+
+ggplot(mandato_pol_end, aes(x=MANDATE_END_YEAR, y=retiro, color=ASSEMBLY))+
+  geom_point() + geom_line(colour="red")+facet_wrap(.~ASSEMBLY, ncol = 4)+
+ scale_x_continuous(name = "Mandate starts", limits = c(1800, 2020)) +
+  scale_y_continuous(name = "Period change", limits = c(0, 135))
+
+
+
+
+mandato_p$PERSON_ID<-mandato_p$ID
+View(mandato_p)
+mandato_p<-mandato_p[,c(13,2:12)]
+mandato_p_ij<-inner_join(mandato, mandato_p, by=("PERSON_ID"))
+mandato_p_ij<- mandato_p_ij %>% distinct()
+View(mandato_p_ij)
+
+
+
+
+mandato_p_ij_init<-mandato_p_ij %>%                                                     select(ASSEMBLY, GENDER, MANDATE_START_DAY, MANDATE_START_MONTH, 
+MANDATE_START_YEAR)%>%
+group_by(ASSEMBLY, GENDER, MANDATE_START_DAY, MANDATE_START_MONTH)%>%                                filter(MANDATE_START_YEAR %in% c(1803,1805,1807,1808,1809,1811,1813,1814,
+1815,1816,1817,1818,1819, 1820,1821,1822,1823,1824,1825,1826,1827,1828,1829,
+1830,1831,1832,1833,1834,1835,1836,1837,1838,1839,1840,1841,1842,1843,1844,
+1845,1846,1847,1848,1849,1850, 1851,1852,1853,1854,1855,1856,1857,1858,1859,
+1860,1861,1862,1863,1864,1865,1866,1867,1868,18691870,1871,1872,1873,1874,
+1875,1876,1877,1878,1879,1880,1881,1882,1883,1884,1885,1886,1887,1888,1889,
+1890,1891,1892,1893,1894,1895,1896,1897,1898,1899,1900,1901,1902,1903,1904,
+1905,1906,1907,1908,1909,1928,1929,1930,1931,1932,1933,1934,1935,1936,1937,
+1938,1939,1940,1941,1942,1943,1944,1945,1946,1947,1948,1949,1950,1951,1952,
+1953,1954,1955,1956,1957,1958,1959,1960,1961,1962,1963,1964,1965,1966,1967,
+1968,1969,1970,1971,1972,1973,1974,1975,1976,1977,1978,1979,1980,1981,1982,
+1983,1984,1985,1986,1987,1988,1989,1990,1991,1992,1993,1994,1995,1996,1997,
+1998,1999,2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,
+2013,2014,2015,2016,2017,2018))%>%
+count(MANDATE_START_YEAR, name="cambios") %>%
+arrange(MANDATE_START_YEAR)
+
+View(mandato_p_ij_init)
+
+ggplot(mandato_p_ij_init,aes(x = MANDATE_START_YEAR, y =cambios, color=ASSEMBLY)) +
+geom_point()+ geom_line()+
+facet_grid(ASSEMBLY ~ GENDER)+
+ theme(axis.text.x = element_text(angle = -60, vjust = 0.5, hjust=0))
+
+
+mandato_p_ij_end <-mandato_p_ij %>%
+select(ASSEMBLY,GENDER, MANDATE_END_DAY, MANDATE_END_MONTH, MANDATE_END_YEAR)%>%
+group_by(ASSEMBLY,GENDER, MANDATE_END_DAY, MANDATE_END_MONTH)%>% 
+filter(MANDATE_END_YEAR %in% c(1804,1805,1807,1808,1809,1810,1811,1812,
+1813,1814,1815,1816,1817,1818,1819,1820,1821,1822,1824,1825,1826,1827,1828,
+1829,1830,1831,1832,1833,1834,1835,1836,1837,1838,1839,1840,1841,1842,1843,
+1844,1845,1846,1847,1848,1849,1850,1851,1852,1853,1854,1855,1856,1857,1858,
+1859,1860,1861,1862,1863,1864,1865,1866,1867,1868,1869,1870,1871,1872,1873,
+1874,1875,1876,1877,1878,1879,1880,1881,1882,1883,1884,1885,1886,1887,1888,
+1889,1890,1891,1892,1893,1894,1895,1896,1897,1898,1899,1900,1901,1902,1903,
+1904,1905,1906,1907,1908,1909,1910,1911,1912,1913,1914,1915,1916,1917,1918,
+1919,1920,1921,1922,1923,1924,1925,1926,1927,1928,1929,1930,1931,1932,1933,
+1934,1935,1936,1937,1938,1939,1940,1941,1942,1943,1944,1945,1946,1947,1948,
+1949,1950,1951,1952,1953,1954,1955,1956,1957,1958,1959,1960,1961,1962,1963,
+1964,1965,1966,1967,1968,1969,1970,1971,1972,1973,1974,1975,1976,1977,1978,
+1979,1980,1981,1982,1983,1984,1985,1986,1987,1988,1989,1990,1991,1992,1993,
+1994,1995,1996,1997,1998,1999,2000,2001,2002,2003,2004,2005,2006,2007,2008,
+2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019), ASSEMBLY %in% 
+  c("Cantonal Council", "Executive Council", "Grand Council", "Small 
+  Council")) %>%
+count(MANDATE_END_YEAR, name="retiro") %>%
+arrange(MANDATE_END_YEAR)
+View(mandato_p_ij_end)
+
+
+
+ggplot(mandato_p_ij_end, aes(x = MANDATE_END_YEAR, y =retiro, 
+    color=ASSEMBLY)) +
+geom_point()+ geom_line(colour="brown")+facet_grid(ASSEMBLY ~ GENDER) +
+theme(axis.text.x = element_text(angle = -60, vjust = 0.5, hjust=0))
+   
+      
+      
+mandato_a<-mandato_a[,c(3:10)]
+View(mandato_a)
+mandato<-mandato[,c(2:9)]
+View(mandato)
+View(mandato_a_ij)      
+mandato_a_ij<-inner_join(mandato_a, mandato,by=("PERSON_ID"))
+mandato_a_ij<- mandato_a_ij %>% distinct()
+vis_miss(mandato_a_ij)
+View(mandato_a_ij)
+
+mandato_2000_cc<-mandato_a_ij %>%
+ select(PERSON_ID,ASSEMBLY, PARTY,MANDATE_START_YEAR) %>%
+group_by(PARTY,ASSEMBLY) %>%
+filter(MANDATE_START_YEAR==2000, ASSEMBLY %in% c("Cantonal Council",
+  "Grand Council", "Executive Council")) %>%
+ count(MANDATE_START_YEAR, name = "frequency") %>%
+mutate(relative_frequency = round(100*frequency/sum(frequency)))
+ 
+ View(mandato_2000_cc)
+ ggplot(mandato_2000_cc,aes(x = "", y = frequency, fill = PARTY)) +
+    geom_col(alpha = 0.7) +
+    coord_polar("y", start = 0, direction = -1) +
+    geom_text(aes(label = paste0(relative_frequency, "%")),
+              position = position_stack(vjust = 0.5),
+              size = 7) +
+    labs(title = "Party Participation in Election",
+         subtitle = "Cantonal Council",
+         fill = "MANDATE_START_YEAR") + theme_void()
+ 
+ 
+  
+  
+  mandato_assembly_evolution<-mandato_a_ij %>%
+ select(PERSON_ID,ASSEMBLY, PARTY,MANDATE_START_YEAR) %>%
+ group_by(PARTY,ASSEMBLY) %>%
+     filter(MANDATE_START_YEAR %in% c(1803,1805,1807,1808,1809,1811,1813,1814,1815,1816,1817,1818,1819,1820,1821,
+1822,1823,1824,1825,1826,1827,1828,1829,1830,1831,1832,1833,1834,1835,1836,
+1837,1838,1839,1840,1841,1842,1843,1844,1845,1846,1847,1848,1849,1850,1851,
+1852,1853,1854,1855,1856,1857,1858,1859,1860,1861,1862,1863,1864,1865,1866,
+1867,1868,18691870,1871,1872,1873,1874,1875,1876,1877,1878,1879,1880,1881,
+1882,1883,1884,1885,1886,1887,1888,1889,1890,1891,1892,1893,1894,1895,1896,
+1897,1898,1899,1900,1901,1902,1903,1904,1905,1906,1907,1908,1909,1928,1929,
+1930,1931,1932,1933,1934,1935,1936,1937,1938,1939,1940,1941,1942,1943,1944,
+1945,1946,1947,1948,1949,1950,1951,1952,1953,1954,1955,1956,1957,1958,1959,
+1960,1961,1962,1963,1964,1965,1966,1967,1968,1969,1970,1971,1973,1974,1975,
+1976,1977,1978,1979,1980,1981,1982,1983,1984,1985,1986,1987,1988,1989,1990,
+1991,1992,1993,1994,1995,1996,1997,1998,1999,2000,2001,2002,2003,2004,2005,
+2006,2007,2008,2009,2010,2011,2012,2013, 2014, 2015 ,2016, 2017,2018), 
+ASSEMBLY %in% c("Cantonal Council",
+  "Grand Council", "Executive Council"))%>%
+  count(MANDATE_START_YEAR, name = "frequency") %>%
+mutate(relative_frequency = round(100*frequency/sum(frequency))) %>%
+    arrange(desc(MANDATE_START_YEAR))
+ View(mandato_assembly_evolution)
+  
+ggplot(mandato_assembly_evolution, aes(x = MANDATE_START_YEAR, y = frequency, 
+    colour = ASSEMBLY)) +
+     geom_point() +
+     geom_line() +
+     labs(title = "Assembly Composition",
+          caption = "Evolution of Composition",
+          x = "Assembly",
+          y = "Evolution",
+          colour = "ASSEMBLY") +
+     theme_minimal()
+
+
+
+View(mandato_p)
+mandato_p_sina<-subset(mandato_p, YEAR_OF_DEATH!="")
+mandato_p_sina$YEAR_OF_DEATH<-as.integer(mandato_p_sina$YEAR_OF_DEATH)
+mandato_p_sina$survival<-mandato_p_sina$YEAR_OF_DEATH-mandato_p_sina$YEAR_OF_BIRTH
+
+View(mandato_p_sina)
+ 
+mean(mandato_p_sina$survival)
+
+
+mandato_p_sina$doctores<-gsub("[^D]", "",mandato_p_sina$TITLE)
+View(mandato_p_sina)
+
+
+mandato_p_sina$TITLE[mandato_p_sina$TITLE==""]<-0
+View(mandato_p_sina)
+Do<-mandato_p_sina %>%
+     select(survival, doctores)%>%
+     group_by(survival) %>%
+     filter(doctores=="D")
+View(Do)
+ controlo<-mandato_p_sina %>%
+     select(survival, TITLE)%>%
+     group_by(survival) %>%
+     filter(TITLE==0)
+view(controlo)
+ controlo$TITLE,l
+   group_by(survival) %>%
+    filter(TITLE==0)
+View(controlo)
+controlo$TITLE<-as.character(controlo$TITLE)
+
+ctrolo<-controlo
+dro<-Do
+View(ctrolo)
+ View(dro)
+ ctrolo$group<-ctrolo$TITLE
+ dro$group<-dro$doctores
+ View(dro)
+ View(ctrolo)
+ ctrolo<-ctrolo[,c(1,3)]
+ View(ctrolo)
+ dro<-dro[,c(1,3)]
+ View(dro)
+
+
+
+my_data_bro<-bind_rows(dro,ctrolo)
+ ggboxplot(my_data_bro, x = "group", y = "survival", 
+          color = "group", palette = c("#00AFBB", "#E7B800"),
+     order = c("0", "D"),
+         ylab = "Survival_age", xlab = "Education")+
+   scale_y_continuous(name = "Survival age", limits = c(0, 100))
+
+ 
+ kruskal.test(survival ~ group, data = my_data_bro)
+
+
+
+
+
+
+
+
+ ggplot(data = mydata, mapping = aes(x=survival, colour = grupos)) + 
+    geom_histogram(bins = 10) +
+    theme_bw() + geom_text(aes(label = scales::percent(Prop)), position = position_stack(.5)) +     facet_grid(. ~ grupos) +
+    theme(legend.position = "none")
+
+  
+kruskal.test(survival ~ grupos, data = mydata)  
+
+
+
+
+
+
+
+
+
+politicians_b1918<-subset(mandato_p, BORN_BEFORE_1918==TRUE)
+View(politicians_b1918)
+politicians_a1918<-subset(mandato_p, BORN_AFTER_1918==TRUE)
+View(politicians_a1918)
+politicians_a1918_sina<-subset(politicians_a1918, YEAR_OF_DEATH!="NA")
+politicians_b1918_sina<-subset(politicians_b1918, YEAR_OF_DEATH!="NA")
+View(politicians_a1918_sina)
+politicians_a1918_sina$survival<-politicians_a1918_sina$YEAR_OF_DEATH-politicians_a1918_sina$YEAR_OF_BIRTH
+View(politicians_a1918_sina)
+politicians_a1918_sina$TITLE[politicians_a1918_sina$TITLE==""]<-0
+politicians_a1918_sina$doctores<-gsub("[^D]", "",politicians_a1918_sina$TITLE)
+View(politicians_a1918_sina)
+D<-politicians_a1918_sina %>%
+     select(survival, doctores)%>%
+     group_by(survival) %>%
+     filter(doctores=="D")
+View(D)
+ View(politicians_a1918_sina)
+ control<-politicians_a1918_sina %>%
+     select(survival, TITLE)%>%
+   group_by(survival) %>%
+    filter(TITLE==0)
+
+ctrol<-control
+control$TITLE<-as.character(control$TITLE)
+dr<-D
+View(ctrol)
+ View(dr)
+ ctrol$group<-ctrol$TITLE
+ dr$group<-dr$doctores
+ View(dr)
+ View(ctrol)
+ ctrol<-ctrol[,c(1,3)]
+ View(ctrol)
+ dr<-dr[,c(1,3)]
+ View(dr)
+
+
+
+ ggboxplot(my_data_br, x = "group", y = "survival", 
+         color = "group", palette = c("#00AFBB", "#E7B800"),
+          order = c("0", "D"),
+          ylab = "Survival_age", xlab = "Education")+
+   scale_y_continuous(name = "Survival age", limits = c(0, 100))
+   
+ kruskal.test(survival ~ group, data = my_data_br)
+
+
+
+ 
+ 
+politicians_a1918<-subset(mandato_p, BORN_AFTER_1918==TRUE)
+politicians_b1918_sina<-subset(politicians_b1918, YEAR_OF_DEATH!="NA")
+politicians_b1918_sina$survival<-politicians_b1918_sina$YEAR_OF_DEATH-politicians_b1918_sina$YEAR_OF_BIRTH
+View(politicians_b1918_sina)
+politicians_b1918_sina$TITLE[politicians_b1918_sina$TITLE==""]<-0
+politicians_b1918_sina$doctores<-gsub("[^D]", "",politicians_b1918_sina$TITLE)
+View(politicians_b1918_sina)
+Dr<-politicians_b1918_sina %>%
+     select(survival, doctores)%>%
+     group_by(survival) %>%
+     filter(doctores=="D")
+View(Dr)
+ View(politicians_b1918_sina)
+ controles<-politicians_b1918_sina %>%
+     select(survival, TITLE)%>%
+   group_by(survival) %>%
+    filter(TITLE==0)
+
+ctrols<-controles
+controles$TITLE<-as.character(controles$TITLE)
+drs<-Dr
+View(ctrols)
+ View(drs)
+ ctrols$group<-ctrols$TITLE
+ drs$group<-drs$doctores
+ View(drs)
+ View(ctrols)
+ ctrols<-ctrols[,c(1,3)]
+ View(ctrols)
+ drs<-drs[,c(1,3)]
+ View(drs)
+
+
+
+my_data_brs<-bind_rows(drs,ctrols)
+ ggboxplot(my_data_brs, x = "group", y = "survival", 
+         color = "group", palette = c("#00AFBB", "#E7B800"),
+          order = c("0", "D"),
+          ylab = "Survival_age", xlab = "Education")+
+   scale_y_continuous(name = "Survival age", limits = c(0, 100))
+   
+ kruskal.test(survival ~ group, data = my_data_brs)
+
+
+
+
+ 
+ 
+ 
+ 
+ 
+ 
+  most_mandates<-mandato_p_ij %>%
+ select(PERSON_ID,FIRSTNAME,LASTNAME,MANDATE_START_YEAR) %>%
+ group_by(PERSON_ID,FIRSTNAME, LASTNAME) %>%
+     filter(MANDATE_START_YEAR %in% c(1803,1805,1807,1808,1809,1811,1813,1814,1815,1816,1817,1818,1819,1820,1821,
+1822,1823,1824,1825,1826,1827,1828,1829,1830,1831,1832,1833,1834,1835,1836,
+1837,1838,1839,1840,1841,1842,1843,1844,1845,1846,1847,1848,1849,1850,1851,
+1852,1853,1854,1855,1856,1857,1858,1859,1860,1861,1862,1863,1864,1865,1866,
+1867,1868,18691870,1871,1872,1873,1874,1875,1876,1877,1878,1879,1880,1881,
+1882,1883,1884,1885,1886,1887,1888,1889,1890,1891,1892,1893,1894,1895,1896,
+1897,1898,1899,1900,1901,1902,1903,1904,1905,1906,1907,1908,1909,1928,1929,
+1930,1931,1932,1933,1934,1935,1936,1937,1938,1939,1940,1941,1942,1943,1944,
+1945,1946,1947,1948,1949,1950,1951,1952,1953,1954,1955,1956,1957,1958,1959,
+1960,1961,1962,1963,1964,1965,1966,1967,1968,1969,1970,1971,1973,1974,1975,
+1976,1977,1978,1979,1980,1981,1982,1983,1984,1985,1986,1987,1988,1989,1990,
+1991,1992,1993,1994,1995,1996,1997,1998,1999,2000,2001,2002,2003,2004,2005,
+2006,2007,2008,2009,2010,2011,2012,2013, 2014, 2015 ,2016, 2017,2018)) %>%
+  count(MANDATE_START_YEAR, name = "frequency") %>%
+    summarise(total_mandates=sum(frequency)) %>%
+    arrange(desc(total_mandates))
+View(most_mandates) 
+
+mandato_p_ij_menos1<-mandato_p_ij[,-1]
+View(mandato_p_ij_menos1) 
+mandato_a_red_ij<-inner_join(mandato_a_red,mandato_p_ij_menos1, by=("PERSON_ID")) 
+mandato_a_red_ij<-mandato_a_red_ij %>% distinct()
+vis_miss(mandato_a_red_ij)
+
+  multiple_mandates<-mandato_a_red_ij %>%
+ select(PERSON_ID, MANDATE_ID, FIRSTNAME,LASTNAME,MANDATE_START_MONTH, MANDATE_START_YEAR,
+        MANDATE_END_MONTH, MANDATE_END_YEAR) %>%
+ group_by(PERSON_ID,MANDATE_ID,FIRSTNAME, LASTNAME) %>%
+     filter(MANDATE_START_YEAR %in% c(1803,1805,1807,1808,1809,1811,1813,1814,1815,1816,1817,1818,1819,1820,1821,
+1822,1823,1824,1825,1826,1827,182, 8,1829,1830,1831,1832,1833,1834,1835,1836,
+1837,1838,1839,1840,1841,1842,1843,1844,1845,1846,1847,1848,1849,1850,1851,
+1852,1853,1854,1855,1856,1857,1858,1859,1860,1861,1862,1863,1864,1865,1866,
+1867,1868,18691870,1871,1872,1873,1874,1875,1876,1877,1878,1879,1880,1881,
+1882,1883,1884,1885,1886,1887,1888,1889,1890,1891,1892,1893,1894,1895,1896,
+1897,1898,1899,1900,1901,1902,1903,1904,1905,1906,1907,1908,1909,1928,1929,
+1930,1931,1932,1933,1934,1935,1936,1937,1938,1939,1940,1941,1942,1943,1944,
+1945,1946,1947,1948,1949,1950,1951,1952,1953,1954,1955,1956,1957,1958,1959,
+1960,1961,1962,1963,1964,1965,1966,1967,1968,1969,1970,1971,1973,1974,1975,
+1976,1977,1978,1979,1980,1981,1982,1983,1984,1985,1986,1987,1988,1989,1990,
+1991,1992,1993,1994,1995,1996,1997,1998,1999,2000,2001,2002,2003,2004,2005,
+2006,2007,2008,2009,2010,2011,2012,2013, 2014, 2015 ,2016, 2017,2018), 
+MANDATE_END_YEAR %in% c(1803,1805,1807,1808,1809,1811,1813,1814,1815,1816,
+1817,1818,1819,1820,1821,
+1822,1823,1824,1825,1826,1827,182, 8,1829,1830,1831,1832,1833,1834,1835,1836,
+1837,1838,1839,1840,1841,1842,1843,1844,1845,1846,1847,1848,1849,1850,1851,
+1852,1853,1854,1855,1856,1857,1858,1859,1860,1861,1862,1863,1864,1865,1866,
+1867,1868,18691870,1871,1872,1873,1874,1875,1876,1877,1878,1879,1880,1881,
+1882,1883,1884,1885,1886,1887,1888,1889,1890,1891,1892,1893,1894,1895,1896,
+1897,1898,1899,1900,1901,1902,1903,1904,1905,1906,1907,1908,1909,1928,1929,
+1930,1931,1932,1933,1934,1935,1936,1937,1938,1939,1940,1941,1942,1943,1944,
+1945,1946,1947,1948,1949,1950,1951,1952,1953,1954,1955,1956,1957,1958,1959,
+1960,1961,1962,1963,1964,1965,1966,1967,1968,1969,1970,1971,1973,1974,1975,
+1976,1977,1978,1979,1980,1981,1982,1983,1984,1985,1986,1987,1988,1989,1990,
+1991,1992,1993,1994,1995,1996,1997,1998,1999,2000,2001,2002,2003,2004,2005,
+2006,2007,2008,2009,2010,2011,2012,2013, 2014, 2015 ,2016, 2017,2018),
+MANDATE_START_YEAR >= MANDATE_END_YEAR)%>%
+  arrange(desc(MANDATE_START_YEAR))
+  View(multiple_mandates)
+  
+  
+  
+  
+  
+mandato_p$PERSON_ID<-mandato_p$ID
+View(mandato_p)
+mandato_a_red_party<-mandato_a[,c(3:10)]
+View(mandato_a_red_party)
+
+mandato_ap_party<-full_join(mandato_a_red_party, mandato_p, by=("PERSON_ID"))
+mandato_ap_party<- mandato_ap_party %>% distinct()
+
+change_party<- mandato_ap_party %>%
+select(PERSON_ID, FIRSTNAME, LASTNAME, PARTY, AFFILIATION_START_YEAR, AFFILIATION_END_YEAR) %>%   
+group_by(PARTY,FIRSTNAME, LASTNAME) %>%
+filter(AFFILIATION_START_YEAR %in% c(1803,1805,1807,1808,1809,1811,1813,1814,1815,1816,1817,1818,1819,1820,1821,
+1822,1823,1824,1825,1826,1827,1828,1829,1830,1831,1832,1833,1834,1835,1836,
+1837,1838,1839,1840,1841,1842,1843,1844,1845,1846,1847,1848,1849,1850,1851,
+1852,1853,1854,1855,1856,1857,1858,1859,1860,1861,1862,1863,1864,1865,1866,
+1867,1868,18691870,1871,1872,1873,1874,1875,1876,1877,1878,1879,1880,1881,
+1882,1883,1884,1885,1886,1887,1888,1889,1890,1891,1892,1893,1894,1895,1896,
+1897,1898,1899,1900,1901,1902,1903,1904,1905,1906,1907,1908,1909,1928,1929,
+1930,1931,1932,1933,1934,1935,1936,1937,1938,1939,1940,1941,1942,1943,1944,
+1945,1946,1947,1948,1949,1950,1951,1952,1953,1954,1955,1956,1957,1958,1959,
+1960,1961,1962,1963,1964,1965,1966,1967,1968,1969,1970,1971,1973,1974,1975,
+1976,1977,1978,1979,1980,1981,1982,1983,1984,1985,1986,1987,1988,1989,1990,
+1991,1992,1993,1994,1995,1996,1997,1998,1999,2000,2001,2002,2003,2004,2005,
+2006,2007,2008,2009,2010,2011,2012,2013, 2014, 2015 ,2016, 2017,2018)) %>%
+count(AFFILIATION_START_YEAR, name="new_party") %>%
+summarise(total_new_party=sum(new_party)) %>%
+arrange(desc(total_new_party))
+View(change_party)
+
+
+`
+```{r}
+
+```
+
